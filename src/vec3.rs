@@ -35,6 +35,15 @@ impl Vec3 {
     pub fn unit_vector(self) -> Vec3 {
         self / self.length()
     }
+
+    pub fn to_color_string(self) -> String {
+        format!(
+            "{} {} {}",
+            (self.x * 255.999) as u32,
+            (self.y * 255.999) as u32,
+            (self.z * 255.999) as u32,
+        )
+    }
 }
 
 impl ops::Add<Vec3> for Vec3 {
@@ -126,3 +135,4 @@ impl ops::DivAssign<f64> for Vec3 {
 }
 
 pub type Point3 = Vec3;
+pub type Color = Vec3;
