@@ -17,6 +17,7 @@ pub struct Camera {
     pixel_delta_u: Vec3,
     pixel_delta_v: Vec3,
     samples_per_pixel: u32,
+    max_depth: u32,
 }
 
 static PI: f64 = 3.1415926535897932385;
@@ -28,10 +29,15 @@ fn degrees_to_radians(degrees: f64) -> f64 {
     degrees * PI / 180.0
 }
 
-fn ray_color(r: &Ray, world: &HittableList) -> Color {
-    let hit_record_option = world.hit(r, &Interval::new(0.0, f64::INFINITY));
+fn ray_color(r: &Ray, depth: u32, world: &HittableList) -> Color {
+    if depth <= 0 {
+        return Color::new(0.0, 0.0, 0.0);
+    }
+
+    let hit_record_option = world.hit(r, &Interval::new(0.001, f64::INFINITY));
     if let Some(hit_record) = hit_record_option {
-        return 0.5 * (hit_record.normal + Vec3::new(1.0, 1.0, 1.0));
+        let direction = hit_record.normal + Vec3::random_unit_vector();
+        return 0.5 * ray_color(&Ray::new(hit_record.p, direction), depth - 1, world);
     }
 
     let a = 0.5 * r.dir.unit_vector().y + 1.0;
@@ -39,7 +45,12 @@ fn ray_color(r: &Ray, world: &HittableList) -> Color {
 }
 
 impl Camera {
-    pub fn new(aspect_ratio: f64, image_width: u32, samples_per_pixel: u32) -> Self {
+    pub fn new(
+        aspect_ratio: f64,
+        image_width: u32,
+        samples_per_pixel: u32,
+        max_depth: u32,
+    ) -> Self {
         let image_height: u32 = max(1, (image_width as f64 / aspect_ratio) as u32);
 
         // Camera
@@ -72,6 +83,7 @@ impl Camera {
             pixel_delta_u,
             pixel_delta_v,
             samples_per_pixel,
+            max_depth,
         }
     }
 
@@ -84,7 +96,7 @@ impl Camera {
                 let mut pixel_color = Color::new(0.0, 0.0, 0.0);
                 for _sample in 0..self.samples_per_pixel {
                     let r = self.get_ray(i, j);
-                    pixel_color += ray_color(&r, world);
+                    pixel_color += ray_color(&r, self.max_depth, world);
                 }
                 println!("{}", pixel_color.to_color_string(self.samples_per_pixel));
             }
