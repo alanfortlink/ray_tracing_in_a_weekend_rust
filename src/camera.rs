@@ -36,12 +36,19 @@ fn ray_color(r: &Ray, depth: u32, world: &HittableList) -> Color {
 
     let hit_record_option = world.hit(r, &Interval::new(0.001, f64::INFINITY));
     if let Some(hit_record) = hit_record_option {
-        let direction = hit_record.normal + Vec3::random_unit_vector();
-        return 0.5 * ray_color(&Ray::new(hit_record.p, direction), depth - 1, world);
+        let scatter_option = hit_record.material.scatter(r, &hit_record);
+
+        if let Some((scattered, attenuation)) = scatter_option {
+            return attenuation * ray_color(&scattered, depth - 1, world);
+        }
+
+        return Color::new(0.0, 0.0, 0.0);
     }
 
     let a = 0.5 * r.dir.unit_vector().y + 1.0;
-    (1.0 - a) * Color::new(1.0, 1.0, 1.0) + a * Color::new(0.5, 0.7, 1.0)
+    let ret = (1.0 - a) * Color::new(1.0, 1.0, 1.0) + a * Color::new(0.5, 0.7, 1.0);
+
+    ret
 }
 
 impl Camera {
@@ -96,7 +103,8 @@ impl Camera {
                 let mut pixel_color = Color::new(0.0, 0.0, 0.0);
                 for _sample in 0..self.samples_per_pixel {
                     let r = self.get_ray(i, j);
-                    pixel_color += ray_color(&r, self.max_depth, world);
+                    let c = ray_color(&r, self.max_depth, world);
+                    pixel_color += c;
                 }
                 println!("{}", pixel_color.to_color_string(self.samples_per_pixel));
             }

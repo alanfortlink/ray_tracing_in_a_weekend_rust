@@ -1,6 +1,6 @@
 use std::ops;
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug)]
 pub struct Vec3 {
     pub x: f64,
     pub y: f64,
@@ -38,6 +38,11 @@ impl Vec3 {
 
     pub fn unit_vector(self) -> Vec3 {
         self / self.length()
+    }
+
+    pub fn near_zero(&self) -> bool {
+        let s = 1.0e-8;
+        (self.x.abs() < s) && (self.y.abs() < s) && (self.z.abs() < s)
     }
 
     pub fn to_color_string(&self, samples_per_pixel: u32) -> String {
@@ -95,6 +100,10 @@ impl Vec3 {
         } else {
             -on_unit_sphere
         }
+    }
+
+    pub fn reflect(&self, n: &Vec3) -> Vec3 {
+        (*self) - 2.0 * (self.dot(*n)) * (*n)
     }
 }
 
