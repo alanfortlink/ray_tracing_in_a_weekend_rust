@@ -9,7 +9,21 @@ use crate::ray::Ray;
 
 use std::{cmp::max, io::Write};
 
+fn hit_sphere(center: &Point3, radius: f64, ray: &Ray) -> bool {
+    let oc = ray.orig - *center;
+    let a = ray.dir.dot(ray.dir);
+    let b = 2.0 * oc.dot(ray.dir);
+    let c = oc.dot(oc) - radius * radius;
+    let discriminent = b * b - 4.0 * a * c;
+    discriminent >= 0.0
+}
+
 fn ray_color(ray: &Ray) -> Color {
+    let sphere_center = Point3::new(0.0, 0.0, -1.0);
+    if hit_sphere(&sphere_center, 0.5, ray) {
+        return Color::new(1.0, 0.0, 0.0);
+    }
+
     let a = 0.5 * ray.dir.unit_vector().y + 1.0;
     (1.0 - a) * Color::new(1.0, 1.0, 1.0) + a * Color::new(0.5, 0.7, 1.0)
 }
@@ -22,7 +36,7 @@ fn main() -> std::io::Result<()> {
 
     // Camera
     let focal_length = 1.0;
-    let real_aspect_ratio = ((image_width as f64) / (image_height as f64)) as u32;
+    let real_aspect_ratio = (image_width as f64) / (image_height as f64);
     let viewport_height = 2.0;
     let viewport_width = viewport_height * (real_aspect_ratio) as f64;
     let camera_center = Point3::new(0.0, 0.0, 0.0);
