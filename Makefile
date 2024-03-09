@@ -1,2 +1,2 @@
 run:
-	cargo run > image.ppm && open image.ppm
+	cargo run --release > image.ppm && open image.ppm

@@ -36,12 +36,18 @@ impl Vec3 {
         self / self.length()
     }
 
-    pub fn to_color_string(self) -> String {
+    pub fn to_color_string(&self, samples_per_pixel: u32) -> String {
+        let scale = 1.0 / samples_per_pixel as f64;
+
+        let r = (self.x * scale).clamp(0.000, 0.999);
+        let g = (self.y * scale).clamp(0.000, 0.999);
+        let b = (self.z * scale).clamp(0.000, 0.999);
+
         format!(
             "{} {} {}",
-            (self.x * 255.999) as u32,
-            (self.y * 255.999) as u32,
-            (self.z * 255.999) as u32,
+            (r * 256.0) as u32,
+            (g * 256.0) as u32,
+            (b * 256.0) as u32,
         )
     }
 }

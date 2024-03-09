@@ -16,6 +16,7 @@ pub struct Camera {
     pixel00_loc: Vec3,
     pixel_delta_u: Vec3,
     pixel_delta_v: Vec3,
+    samples_per_pixel: u32,
 }
 
 static PI: f64 = 3.1415926535897932385;
@@ -38,7 +39,7 @@ fn ray_color(r: &Ray, world: &HittableList) -> Color {
 }
 
 impl Camera {
-    pub fn new(aspect_ratio: f64, image_width: u32) -> Self {
+    pub fn new(aspect_ratio: f64, image_width: u32, samples_per_pixel: u32) -> Self {
         let image_height: u32 = max(1, (image_width as f64 / aspect_ratio) as u32);
 
         // Camera
@@ -70,6 +71,7 @@ impl Camera {
             pixel00_loc,
             pixel_delta_u,
             pixel_delta_v,
+            samples_per_pixel,
         }
     }
 
@@ -79,15 +81,30 @@ impl Camera {
         for j in 0..self.image_height {
             std::io::stderr().write_all(format!("Row {}/{}\n", j, self.image_height).as_bytes())?;
             for i in 0..self.image_width {
-                let pixel_center =
-                    self.pixel00_loc + (i * self.pixel_delta_u) + (j * self.pixel_delta_v);
-                let ray_direction = pixel_center - self.center;
-                let r = Ray::new(self.center, ray_direction);
-                let color = ray_color(&r, &world);
-                println!("{}", color.to_color_string());
+                let mut pixel_color = Color::new(0.0, 0.0, 0.0);
+                for _sample in 0..self.samples_per_pixel {
+                    let r = self.get_ray(i, j);
+                    pixel_color += ray_color(&r, world);
+                }
+                println!("{}", pixel_color.to_color_string(self.samples_per_pixel));
             }
         }
 
         Ok(())
+    }
+
+    fn get_ray(&self, i: u32, j: u32) -> Ray {
+        let pixel_center = self.pixel00_loc + (i * self.pixel_delta_u) + (j * self.pixel_delta_v);
+        let pixel_sample = pixel_center + self.pixel_sample_square();
+        let ray_origin = self.center;
+        let ray_direction = pixel_sample - ray_origin;
+
+        Ray::new(ray_origin, ray_direction)
+    }
+
+    fn pixel_sample_square(&self) -> Vec3 {
+        let px = -0.5 + rand::random::<f64>();
+        let py = -0.5 + rand::random::<f64>();
+        (px * self.pixel_delta_u) + (py * self.pixel_delta_v)
     }
 }

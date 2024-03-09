@@ -22,7 +22,8 @@ fn main() -> std::io::Result<()> {
     // Camera
     let aspect_ratio = 16.0 / 9.0;
     let image_width: u32 = 400;
-    let camera = Camera::new(aspect_ratio, image_width);
+    let samples_per_pixel: u32 = 100;
+    let camera = Camera::new(aspect_ratio, image_width, samples_per_pixel);
 
     // Render
     camera.render(&world)?;
