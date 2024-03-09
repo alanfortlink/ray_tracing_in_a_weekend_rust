@@ -2,9 +2,9 @@ use std::ops;
 
 #[derive(Copy, Clone)]
 pub struct Vec3 {
-    x: f64,
-    y: f64,
-    z: f64,
+    pub x: f64,
+    pub y: f64,
+    pub z: f64,
 }
 
 impl Vec3 {
@@ -57,6 +57,17 @@ impl ops::Add<Vec3> for Vec3 {
     }
 }
 
+impl ops::Sub<Vec3> for Vec3 {
+    type Output = Vec3;
+    fn sub(self, rhs: Vec3) -> Self::Output {
+        Vec3 {
+            x: self.x - rhs.x,
+            y: self.y - rhs.y,
+            z: self.z - rhs.z,
+        }
+    }
+}
+
 impl ops::Neg for Vec3 {
     type Output = Vec3;
 
@@ -88,6 +99,31 @@ impl ops::Mul<f64> for Vec3 {
             y: self.y * rhs,
             z: self.z * rhs,
         }
+    }
+}
+
+impl ops::Mul<u32> for Vec3 {
+    type Output = Vec3;
+    fn mul(self, rhs: u32) -> Self::Output {
+        Vec3 {
+            x: self.x * rhs as f64,
+            y: self.y * rhs as f64,
+            z: self.z * rhs as f64,
+        }
+    }
+}
+
+impl ops::Mul<Vec3> for f64 {
+    type Output = Vec3;
+    fn mul(self, rhs: Vec3) -> Self::Output {
+        rhs * self
+    }
+}
+
+impl ops::Mul<Vec3> for u32 {
+    type Output = Vec3;
+    fn mul(self, rhs: Vec3) -> Self::Output {
+        rhs * self
     }
 }
 
@@ -131,6 +167,19 @@ impl ops::DivAssign<f64> for Vec3 {
         self.x /= rhs;
         self.y /= rhs;
         self.z /= rhs;
+    }
+}
+
+impl ops::Index<u8> for Vec3 {
+    type Output = f64;
+
+    fn index(&self, index: u8) -> &Self::Output {
+        match index {
+            0 => &self.x,
+            1 => &self.y,
+            2 => &self.z,
+            _ => panic!("Invalid Index: {}", index),
+        }
     }
 }
 
