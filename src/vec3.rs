@@ -117,6 +117,19 @@ impl Vec3 {
 
         r_out_perp + r_out_parallel
     }
+
+    pub fn random_in_unit_disk() -> Vec3 {
+        loop {
+            let p = Vec3 {
+                x: rand::random::<f64>() * 2.0 - 1.0,
+                y: rand::random::<f64>() * 2.0 - 1.0,
+                z: 0.0,
+            };
+            if p.length_squared() < 1.0 {
+                return p;
+            }
+        }
+    }
 }
 
 impl ops::Add<Vec3> for Vec3 {

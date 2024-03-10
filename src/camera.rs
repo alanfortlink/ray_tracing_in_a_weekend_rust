@@ -25,6 +25,12 @@ pub struct Camera {
     u: Vec3,
     v: Vec3,
     w: Vec3,
+
+    defocus_angle: f64,
+    focus_dist: f64,
+
+    defocus_disk_u: Vec3,
+    defocus_disk_v: Vec3,
 }
 
 static EMPTY: Interval = Interval::new(f64::INFINITY, f64::NEG_INFINITY);
@@ -67,15 +73,15 @@ impl Camera {
         look_from: Point3,
         look_at: Point3,
         vup: Vec3,
+        defocus_angle: f64,
+        focus_dist: f64,
     ) -> Self {
         let image_height: u32 = max(1, (image_width as f64 / aspect_ratio) as u32);
 
         // Camera
-        let focal_length = (look_from - look_at).length();
-
         let theta = degrees_to_radians(vfov);
         let h = (theta / 2.0).tan();
-        let viewport_height = 2.0 * h * focal_length;
+        let viewport_height = 2.0 * h * focus_dist;
         let real_aspect_ratio = (image_width as f64) / (image_height as f64);
         let viewport_width = viewport_height * (real_aspect_ratio) as f64;
         let camera_center = look_from;
@@ -96,8 +102,13 @@ impl Camera {
 
         // Upper-left pixel
         let viewport_upper_left =
-            camera_center - (focal_length * w) - (0.5 * viewport_u) - (0.5 * viewport_v);
+            camera_center - (focus_dist * w) - (0.5 * viewport_u) - (0.5 * viewport_v);
         let pixel00_loc = viewport_upper_left + 0.5 * (pixel_delta_u + pixel_delta_v);
+
+        let defocus_radius = focus_dist * degrees_to_radians(defocus_angle / 2.0).tan();
+        let defocus_disk_u = defocus_radius * u;
+        let defocus_disk_v = defocus_radius * v;
+
         Camera {
             aspect_ratio,
             image_width,
@@ -115,6 +126,10 @@ impl Camera {
             u,
             v,
             w,
+            defocus_angle,
+            focus_dist,
+            defocus_disk_u,
+            defocus_disk_v,
         }
     }
 
@@ -137,10 +152,20 @@ impl Camera {
         Ok(())
     }
 
+    fn defocus_disk_sample(&self) -> Point3 {
+        let p = Vec3::random_in_unit_disk();
+        self.center + (p.x * self.defocus_disk_u) + (p.y * self.defocus_disk_v)
+    }
+
     fn get_ray(&self, i: u32, j: u32) -> Ray {
         let pixel_center = self.pixel00_loc + (i * self.pixel_delta_u) + (j * self.pixel_delta_v);
         let pixel_sample = pixel_center + self.pixel_sample_square();
-        let ray_origin = self.center;
+        let ray_origin = if self.defocus_angle <= 0.0 {
+            self.center
+        } else {
+            self.defocus_disk_sample()
+        };
+
         let ray_direction = pixel_sample - ray_origin;
 
         Ray::new(ray_origin, ray_direction)
