@@ -1,4 +1,4 @@
-use std::ops;
+use std::{cmp::min, ops};
 
 #[derive(Copy, Clone, Debug)]
 pub struct Vec3 {
@@ -104,6 +104,18 @@ impl Vec3 {
 
     pub fn reflect(&self, n: &Vec3) -> Vec3 {
         (*self) - 2.0 * (self.dot(*n)) * (*n)
+    }
+
+    pub fn refract(&self, n: &Vec3, etai_over_etat: f64) -> Vec3 {
+        let mut cos_theta = (-*self).dot(*n);
+        if cos_theta > 1.0 {
+            cos_theta = 1.0;
+        }
+
+        let r_out_perp = etai_over_etat * (*self + cos_theta * *n);
+        let r_out_parallel = (-(1.0 - r_out_perp.length_squared()).abs().sqrt()) * *n;
+
+        r_out_perp + r_out_parallel
     }
 }
 
