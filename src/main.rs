@@ -23,6 +23,8 @@ use vec3::Color;
 use crate::sphere::Sphere;
 use crate::vec3::Point3;
 
+static PI: f64 = 3.1415926535897932385;
+
 fn main() -> std::io::Result<()> {
     // World
     let mut world: HittableList = HittableList::new();
@@ -37,6 +39,7 @@ fn main() -> std::io::Result<()> {
         100.0,
         material_ground.clone(),
     )));
+
     world.add(Rc::new(Sphere::new(
         Point3::new(0.0, 0.0, -1.0),
         0.5,
@@ -66,7 +69,21 @@ fn main() -> std::io::Result<()> {
     let image_width: u32 = 400;
     let samples_per_pixel: u32 = 100;
     let max_depth: u32 = 50;
-    let camera = Camera::new(aspect_ratio, image_width, samples_per_pixel, max_depth);
+    let vfov: f64 = 20.0;
+    let look_from = Point3::new(-2.0, 2.0, 1.0);
+    let look_at = Point3::new(0.0, 0.0, -1.0);
+    let vup = Point3::new(0.0, 1.0, 0.0);
+
+    let camera = Camera::new(
+        aspect_ratio,
+        image_width,
+        samples_per_pixel,
+        max_depth,
+        vfov,
+        look_from,
+        look_at,
+        vup,
+    );
 
     // Render
     camera.render(&world)?;

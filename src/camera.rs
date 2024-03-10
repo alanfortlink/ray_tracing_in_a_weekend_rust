@@ -18,13 +18,19 @@ pub struct Camera {
     pixel_delta_v: Vec3,
     samples_per_pixel: u32,
     max_depth: u32,
+    vfov: f64,
+    look_from: Point3,
+    look_at: Point3,
+    vup: Vec3,
+    u: Vec3,
+    v: Vec3,
+    w: Vec3,
 }
-
-static PI: f64 = 3.1415926535897932385;
 
 static EMPTY: Interval = Interval::new(f64::INFINITY, f64::NEG_INFINITY);
 static UNIVERSE: Interval = Interval::new(f64::NEG_INFINITY, f64::INFINITY);
 
+static PI: f64 = 3.1415926535897932385;
 fn degrees_to_radians(degrees: f64) -> f64 {
     degrees * PI / 180.0
 }
@@ -57,21 +63,32 @@ impl Camera {
         image_width: u32,
         samples_per_pixel: u32,
         max_depth: u32,
+        vfov: f64,
+        look_from: Point3,
+        look_at: Point3,
+        vup: Vec3,
     ) -> Self {
         let image_height: u32 = max(1, (image_width as f64 / aspect_ratio) as u32);
 
         // Camera
-        let focal_length = 1.0;
+        let focal_length = (look_from - look_at).length();
+
+        let theta = degrees_to_radians(vfov);
+        let h = (theta / 2.0).tan();
+        let viewport_height = 2.0 * h * focal_length;
         let real_aspect_ratio = (image_width as f64) / (image_height as f64);
-        let viewport_height = 2.0;
         let viewport_width = viewport_height * (real_aspect_ratio) as f64;
-        let camera_center = Point3::new(0.0, 0.0, 0.0);
+        let camera_center = look_from;
+
+        let w = (look_from - look_at).unit_vector();
+        let u = vup.cross(w).unit_vector();
+        let v = w.cross(u);
 
         // Horizontal edge
-        let viewport_u = Vec3::new(viewport_width, 0.0, 0.0);
+        let viewport_u = u * viewport_width;
 
         // Vertical edge
-        let viewport_v = Vec3::new(0.0, -viewport_height, 0.0);
+        let viewport_v = (-v) * viewport_height;
 
         // Deltas
         let pixel_delta_u = viewport_u / image_width as f64;
@@ -79,7 +96,7 @@ impl Camera {
 
         // Upper-left pixel
         let viewport_upper_left =
-            camera_center - Vec3::new(0.0, 0.0, focal_length) - viewport_u / 2.0 - viewport_v / 2.0;
+            camera_center - (focal_length * w) - (0.5 * viewport_u) - (0.5 * viewport_v);
         let pixel00_loc = viewport_upper_left + 0.5 * (pixel_delta_u + pixel_delta_v);
         Camera {
             aspect_ratio,
@@ -91,6 +108,13 @@ impl Camera {
             pixel_delta_v,
             samples_per_pixel,
             max_depth,
+            vfov,
+            look_from,
+            look_at,
+            vup,
+            u,
+            v,
+            w,
         }
     }
 
