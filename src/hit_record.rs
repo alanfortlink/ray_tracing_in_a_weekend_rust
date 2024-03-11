@@ -1,5 +1,3 @@
-use std::rc::Rc;
-
 use crate::{material::Material, ray::Ray, vec3::*};
 
 pub struct HitRecord {
@@ -7,11 +5,11 @@ pub struct HitRecord {
     pub normal: Vec3,
     pub t: f64,
     pub front_face: bool,
-    pub material: Rc<dyn Material>,
+    pub material: Material,
 }
 
 impl HitRecord {
-    pub fn new(p: Point3, normal: Vec3, t: f64, material: Rc<dyn Material>) -> Self {
+    pub fn new(p: Point3, normal: Vec3, t: f64, material: Material) -> Self {
         HitRecord {
             p,
             normal,
@@ -21,7 +19,7 @@ impl HitRecord {
         }
     }
 
-    pub fn build(t: f64, r: &Ray, outward_normal: &Vec3, material: Rc<dyn Material>) -> Self {
+    pub fn build(t: f64, r: &Ray, outward_normal: &Vec3, material: Material) -> Self {
         let front_face = r.dir.dot(*outward_normal) < 0.0;
         let normal = match front_face {
             true => *outward_normal,

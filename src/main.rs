@@ -1,24 +1,15 @@
 mod camera;
-mod dielectric;
 mod hit_record;
-mod hittable;
 mod hittable_list;
 mod interval;
-mod lambertial;
 mod material;
-mod metal;
 mod ray;
 mod sphere;
 mod vec3;
 
-use std::rc::Rc;
-
 use camera::Camera;
-use dielectric::Dielectric;
 use hittable_list::HittableList;
-use lambertial::Lambertian;
 use material::Material;
-use metal::Metal;
 use vec3::Color;
 
 use crate::sphere::Sphere;
@@ -30,12 +21,12 @@ fn main() -> std::io::Result<()> {
     // World
     let mut world: HittableList = HittableList::new();
 
-    let ground_material = Rc::new(Lambertian::new(Color::new(0.5, 0.5, 0.5)));
-    world.add(Rc::new(Sphere::new(
+    let ground_material = Material::new_lambertian(Color::new(0.5, 0.5, 0.5));
+    world.add_sphere(Sphere::new(
         Point3::new(0.0, -1000.0, 0.0),
         1000.0,
         ground_material,
-    )));
+    ));
 
     for a in (-11)..11 {
         for b in (-11)..11 {
@@ -47,45 +38,33 @@ fn main() -> std::io::Result<()> {
             );
 
             if (center - Point3::new(4.0, 0.2, 0.0)).length() > 0.9 {
-                let sphere_material: Rc<dyn Material> = if choose_mat < 0.8 {
+                let sphere_material: Material = if choose_mat < 0.8 {
                     // diffuse
                     let albedo = Color::random() * Color::random();
-                    Rc::new(Lambertian::new(albedo))
+                    Material::new_lambertian(albedo)
                 } else if choose_mat < 0.95 {
                     // metal
                     let albedo = Color::random_range(0.5, 1.0);
                     let fuzz = rand::random::<f64>() * 0.5;
-                    Rc::new(Metal::new(albedo, fuzz))
+                    Material::new_metal(albedo, fuzz)
                 } else {
                     // glass
-                    Rc::new(Dielectric::new(1.5))
+                    Material::new_dielectric(1.5)
                 };
 
-                world.add(Rc::new(Sphere::new(center, 0.2, sphere_material)));
+                world.add_sphere(Sphere::new(center, 0.2, sphere_material));
             }
         }
     }
 
-    let material1 = Rc::new(Dielectric::new(1.5));
-    world.add(Rc::new(Sphere::new(
-        Point3::new(0.0, 1.0, 0.0),
-        1.0,
-        material1,
-    )));
+    let material1 = Material::new_dielectric(1.5);
+    world.add_sphere(Sphere::new(Point3::new(0.0, 1.0, 0.0), 1.0, material1));
 
-    let material2 = Rc::new(Lambertian::new(Color::new(0.4, 0.2, 0.1)));
-    world.add(Rc::new(Sphere::new(
-        Point3::new(-4.0, 1.0, 0.0),
-        1.0,
-        material2,
-    )));
+    let material2 = Material::new_lambertian(Color::new(0.4, 0.2, 0.1));
+    world.add_sphere(Sphere::new(Point3::new(-4.0, 1.0, 0.0), 1.0, material2));
 
-    let material3 = Rc::new(Metal::new(Color::new(0.7, 0.6, 0.5), 0.0));
-    world.add(Rc::new(Sphere::new(
-        Point3::new(4.0, 1.0, 0.0),
-        1.0,
-        material3,
-    )));
+    let material3 = Material::new_metal(Color::new(0.7, 0.6, 0.5), 0.0);
+    world.add_sphere(Sphere::new(Point3::new(4.0, 1.0, 0.0), 1.0, material3));
 
     // Camera
     let aspect_ratio = 16.0 / 9.0;

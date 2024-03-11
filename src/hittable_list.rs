@@ -1,27 +1,26 @@
-use crate::{hit_record::HitRecord, hittable::Hittable, interval::Interval, ray::Ray};
-use std::rc::Rc;
+use crate::{hit_record::HitRecord, interval::Interval, ray::Ray, sphere::Sphere};
 
 #[derive(Clone)]
 pub struct HittableList {
-    pub objects: Vec<Rc<dyn Hittable>>,
+    pub spheres: Vec<Sphere>,
 }
 
 impl HittableList {
     pub fn new() -> HittableList {
         HittableList {
-            objects: Vec::new(),
+            spheres: Vec::new(),
         }
     }
 
-    pub fn add(&mut self, hittable: Rc<dyn Hittable>) {
-        self.objects.push(hittable);
+    pub fn add_sphere(&mut self, sphere: Sphere) {
+        self.spheres.push(sphere);
     }
 
     pub fn hit(&self, r: &Ray, ray_t: &Interval) -> Option<HitRecord> {
         let mut hit_record: Option<HitRecord> = None;
         let mut closest_so_far = ray_t.max;
 
-        for object in self.objects.iter() {
+        for object in self.spheres.iter() {
             let hr = object.hit(r, &Interval::new(ray_t.min, closest_so_far));
             if let Some(_) = hr {
                 hit_record = hr;

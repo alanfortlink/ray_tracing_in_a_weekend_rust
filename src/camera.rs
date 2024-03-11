@@ -5,7 +5,9 @@ use crate::{
     vec3::{Color, Point3, Vec3},
 };
 
-use std::{cmp::max, io::Write};
+use rayon::prelude::*;
+
+use std::cmp::max;
 
 pub struct Camera {
     pub aspect_ratio: f64,
@@ -41,17 +43,17 @@ fn degrees_to_radians(degrees: f64) -> f64 {
     degrees * PI / 180.0
 }
 
-fn ray_color(r: &Ray, depth: u32, world: &HittableList) -> Color {
+fn ray_color(r: Ray, depth: u32, world: &HittableList) -> Color {
     if depth <= 0 {
         return Color::new(0.0, 0.0, 0.0);
     }
 
-    let hit_record_option = world.hit(r, &Interval::new(0.001, f64::INFINITY));
+    let hit_record_option = world.hit(&r, &Interval::new(0.001, f64::INFINITY));
     if let Some(hit_record) = hit_record_option {
-        let scatter_option = hit_record.material.scatter(r, &hit_record);
+        let scatter_option = hit_record.material.scatter(&r, &hit_record);
 
         if let Some((scattered, attenuation)) = scatter_option {
-            return attenuation * ray_color(&scattered, depth - 1, world);
+            return attenuation * ray_color(scattered, depth - 1, world);
         }
 
         return Color::new(0.0, 0.0, 0.0);
@@ -136,18 +138,31 @@ impl Camera {
     pub fn render(&self, world: &HittableList) -> std::io::Result<()> {
         println!("P3\n{} {}\n255", self.image_width, self.image_height);
 
-        for j in 0..self.image_height {
-            std::io::stderr().write_all(format!("Row {}/{}\n", j, self.image_height).as_bytes())?;
-            for i in 0..self.image_width {
-                let mut pixel_color = Color::new(0.0, 0.0, 0.0);
-                for _sample in 0..self.samples_per_pixel {
-                    let r = self.get_ray(i, j);
-                    let c = ray_color(&r, self.max_depth, world);
-                    pixel_color += c;
-                }
-                println!("{}", pixel_color.to_color_string(self.samples_per_pixel));
-            }
-        }
+        let rows = (0..self.image_height)
+            .collect::<Vec<u32>>()
+            .par_iter()
+            .map(|j| {
+                (0..self.image_width)
+                    .collect::<Vec<u32>>()
+                    .iter()
+                    .map(|i| {
+                        (0..self.samples_per_pixel)
+                            .collect::<Vec<u32>>()
+                            .iter()
+                            .map(|_| ray_color(self.get_ray(*i, *j), self.max_depth, world))
+                            .reduce(|a, b| a + b)
+                            .unwrap()
+                            .to_color_string(self.samples_per_pixel)
+                    })
+                    .collect::<Vec<String>>()
+                    .join("\n")
+            })
+            .collect::<Vec<String>>()
+            .join("\n");
+
+        println!("{}", rows);
+
+        // std::io::stderr().write_all(format!("Row {}/{}\n", j, self.image_height).as_bytes())?;
 
         Ok(())
     }
