@@ -29,5 +29,13 @@ impl HittableList {
         }
 
         hit_record
+
+        /*
+        self.spheres
+            .par_iter()
+            .map(|object| object.hit(r, &Interval::new(ray_t.min, ray_t.max)))
+            .filter_map(|hit| hit)
+            .min_by(|a, b| a.t.total_cmp(&b.t))
+         * */
     }
 }
