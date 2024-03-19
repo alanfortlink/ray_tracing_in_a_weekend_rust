@@ -1,2 +1,2 @@
-![Final Render](./image.ppm)
-![Glass](./glass.ppm)
+![Final Render](./image.png)
+![Glass](./glass.png)
